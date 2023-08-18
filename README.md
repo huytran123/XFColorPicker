@@ -1,4 +1,4 @@
-# XFColorPicker<br />
+# XFColorPicker on Xamarin<br />
 I am using this: https://github.com/UdaraAlwis/XFColorPickerControl<br />
 And improve it can set default color when load control.<br />
 You can read guide https://github.com/UdaraAlwis/XFColorPickerControl#readme to add your project<br />
