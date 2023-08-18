@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using SkiaSharp;
 using SkiaSharp.Views.Forms;
@@ -11,6 +11,7 @@ namespace XFColorPickerControl.Controls
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class ColorPicker : ContentView
     {
+        bool _isUserPick = false;
         /// <summary>
         /// Occurs when the Picked Color changes
         /// </summary>
@@ -31,7 +32,12 @@ namespace XFColorPickerControl.Controls
         public Color PickedColor
         {
             get { return (Color)GetValue(PickedColorProperty); }
-            private set { SetValue(PickedColorProperty, value); }
+            set
+            {
+
+                SetValue(PickedColorProperty, value);
+               
+            }
         }
 
         private static void PickedColorPropertyChanged(BindableObject bindable, object oldValue, object newValue)
@@ -282,7 +288,9 @@ namespace XFColorPickerControl.Controls
                 e.Handled = true;
 
                 // update the Canvas as you wish
+                _isUserPick = true;
                 SkCanvasView.InvalidateSurface();
+                _isUserPick = false;
             }
         }
 
@@ -291,15 +299,17 @@ namespace XFColorPickerControl.Controls
             double distance = 100.0;
             SKPoint sKPointMin = new SKPoint(1, 1);
             var columns = FindColumns(PickedColor);
-
+            var rows = FindRows(PickedColor);
             var startW = (int)(bitmap.Width / ColorList.Length * columns.StartColumn);
             var endW = (int)(bitmap.Width / ColorList.Length * columns.StopColumn);
+            var startH = (int)(bitmap.Height / 3 * rows.StartRow);
+            var endH = (int)(bitmap.Height / 3 * rows.StopRow);
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            for (int y = 0; y < bitmap.Height; y++)
+            for (int y = startH; y < endH; y = y + 1)
             {
-                for (int x = startW; x < endW; x++)
+                for (int x = startW; x < endW; x = x + 1)
                 {
                     // read the surface into the bitmap
                     skSurface.ReadPixels(skImageInfo,
@@ -335,7 +345,7 @@ namespace XFColorPickerControl.Controls
                 }
             }
             stopwatch.Stop();
-            System.Diagnostics.Debug.WriteLine($"Total time:{stopwatch.ElapsedMilliseconds / 1000} ");
+            System.Diagnostics.Debug.WriteLine($"Total time:{(double)stopwatch.ElapsedMilliseconds / 1000} ");
             System.Diagnostics.Debug.WriteLine($"Color picker:{PickedColor.ToHex()} ");
             return sKPointMin;
         }
@@ -344,16 +354,23 @@ namespace XFColorPickerControl.Controls
         //and find column contain picker color when initial 
         (double StartColumn, double StopColumn) FindColumns(Color color)
         {
-            if (color.R == color.B && color.B == color.G && color.B > 0) return (5.5, 7);
-            if (color.R == color.G && color.R > 0) return (0.5, 2.5);
-            if (color.G == color.B && color.B > 0) return (2.5, 4.5);
-            if (color.R == color.B && color.B > 0) return (4.5, 6.5);
+            if (color.R == color.B && color.B == color.G && color.B > 0) return (5.5, 6);
+            if (color.R == color.G && color.R > 0) return (0.5, 1.5);
+            if (color.G == color.B && color.B > 0) return (2.5, 3.5);
+            if (color.R == color.B && color.B > 0) return (4.5, 5.5);
 
             var max = Math.Max(color.R, Math.Max(color.G, color.B));
-            if (max == color.R) return (0, 1.5);
-            if (max == color.G) return (1.5, 3.5);
-            if (max == color.B) return (3.5, 5.5);
+            if (max == color.R) return (0, 1);
+            if (max == color.G) return (1.5, 2.5);
+            if (max == color.B) return (3.5, 4.5);
             return (0, 6);
+        }
+
+        (double StartRow, double StopRow) FindRows(Color color)
+        {
+            if (color.Luminosity >= 0.0 && color.Luminosity <= (double)1 / 3) return (0, 1);
+            if (color.Luminosity >= (double)1 / 3 && color.Luminosity <= (double)2 / 3) return (0.5, 1.5);
+            return (2, 3);
         }
 
         private SKColor[] GetGradientOrder()
